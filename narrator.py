@@ -10,7 +10,6 @@ import re
 import pyautogui
 import keyboard
 
-
 from PIL import Image
 from dotenv import load_dotenv
 load_dotenv()

@@ -1,45 +1,36 @@
-# David Attenborough narrates your life. 
+# Pokemon GPT
+
+This is a little messaround with getting OpenAI's vision model to play Pokemon.
+
+It works like so:
+
+1. We take a screenshot of the screen
+2. We give that to GPT, asking it to describe the image and allowing it to submit a specific move
+3. We extract that key, and press it
+4. We repeat
+
+You should be able to just change a few lines on the prompt, and get this to work with any Gameboy game.
+
+I've tested it with `gpt-4-vision-preview`, and it worked pretty well. It'll be interesting to see how it works with the next model.
+
+Forked from Charlie's wonderful narrator AI:
 
 https://twitter.com/charliebholtz/status/1724815159590293764
 
-## Want to make your own AI app?
-Check out [Replicate](https://replicate.com). We make it easy to run machine learning models with an API.
-
 ## Setup
 
-Clone this repo, and setup and activate a virtualenv:
-
-```bash
-python3 -m pip install virtualenv
-python3 -m virtualenv venv
-source venv/bin/activate
-```
-
-Then, install the dependencies:
+Clone this repo, and install the dependencies:
 `pip install -r requirements.txt`
 
-Make a [Replicate](https://replicate.com), [OpenAI](https://beta.openai.com/), and [ElevenLabs](https://elevenlabs.io) account and set your tokens:
+Make an [OpenAI](https://beta.openai.com/) account and create an .env file:
 
 ```
-export OPENAI_API_KEY=<token>
-export ELEVENLABS_API_KEY=<eleven-token>
-```
-
-Make a new voice in Eleven and get the voice id of that voice using their [get voices](https://elevenlabs.io/docs/api-reference/voices) API, or by clicking the flask icon next to the voice in the VoiceLab tab.
-
-```
-export ELEVENLABS_VOICE_ID=<voice-id>
+OPENAI_API_KEY=<token>
+OPENAI_ORGANIZATION=<organization>
 ```
 
 ## Run it!
 
-In on terminal, run the webcam capture:
-```bash
-python capture.py
-```
-In another terminal, run the narrator:
-
 ```bash
 python narrator.py
 ```
-
