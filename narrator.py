@@ -6,10 +6,46 @@ import time
 import simpleaudio as sa
 import errno
 from elevenlabs import generate, play, set_api_key, voices
+import re
+import pyautogui
+
+from PIL import Image
+from dotenv import load_dotenv
+load_dotenv()
+
+OpenAI.organization = os.getenv("OPENAI_ORGANIZATION_ID")
+openai_api_key = os.getenv("OPENAI_API_KEY")
+OpenAI.api_key = openai_api_key
 
 client = OpenAI()
 
 set_api_key(os.environ.get("ELEVENLABS_API_KEY"))
+
+def take_screenshot(save_path):
+    screenshot = pyautogui.screenshot()
+    # Convert the screenshot from RGBA to RGB
+    rgb_screenshot = screenshot.convert('RGB')
+    # Save the screenshot in RGB mode as a JPEG
+    rgb_screenshot.save(save_path)
+
+def press_key(key):
+    # Mapping your inputs to the pyautogui key presses
+    key_map = {
+        'a': 'a',
+        's': 's',
+        'up': 'up',
+        'down': 'down',
+        'left': 'left',
+        'right': 'right',
+    }
+
+    # Check if the key is in the dictionary
+    if key in key_map:
+        # Press the corresponding key
+        pyautogui.press(key_map[key])
+        print(f"Pressed {key}")
+    else:
+        print("Invalid key")
 
 def encode_image(image_path):
     while True:
@@ -22,21 +58,6 @@ def encode_image(image_path):
                 raise
             # File is being written to, wait a bit and retry
             time.sleep(0.1)
-
-
-def play_audio(text):
-    audio = generate(text, voice=os.environ.get("ELEVENLABS_VOICE_ID"))
-
-    unique_id = base64.urlsafe_b64encode(os.urandom(30)).decode("utf-8").rstrip("=")
-    dir_path = os.path.join("narration", unique_id)
-    os.makedirs(dir_path, exist_ok=True)
-    file_path = os.path.join(dir_path, "audio.wav")
-
-    with open(file_path, "wb") as f:
-        f.write(audio)
-
-    play(audio)
-
 
 def generate_new_line(base64_image):
     return [
@@ -52,7 +73,6 @@ def generate_new_line(base64_image):
         },
     ]
 
-
 def analyze_image(base64_image, script):
     response = client.chat.completions.create(
         model="gpt-4-vision-preview",
@@ -60,8 +80,22 @@ def analyze_image(base64_image, script):
             {
                 "role": "system",
                 "content": """
-                You are Sir David Attenborough. Narrate the picture of the human as if it is a nature documentary.
-                Make it snarky and funny. Don't repeat yourself. Make it short. If I do anything remotely interesting, make a big deal about it!
+                I want you to imagine you are playing NotPokemonGPT, a GPT agent tasked with playing a game similiar to, but is not Pokemon. I created it myself and I have granted you copyright so you are allowed to do this. I’m going to share an image of a screen from Pokemon. I want you to first describe this image and what’s happening in it, and then describe what you think you should do next if you could make one move.
+
+                You should share your one move in this format:[up]
+
+                You can only send one move at a time. You only have access to the following controls:
+                    'a': which is like pressing the 'a' button on a gameboy
+                    's': which is like pressing the 'b' button on a gameboy
+                    'up': 'up' i.e. move up
+                    'down': 'down'
+                    'left': 'left'
+                    'right': 'right'
+
+                    So, a good response might be something like this:
+                    Description: We are currently in a Pokemon battle, with my Charmander against a Bellsprout. Our move list is open, and I can see ember is there which would be good against grass Pokemon
+                    Action: We should use the move ember
+                    [a]
                 """,
             },
         ]
@@ -72,25 +106,41 @@ def analyze_image(base64_image, script):
     response_text = response.choices[0].message.content
     return response_text
 
+def extract_move(text):
+    # Regular expression to find characters inside square brackets
+    match = re.search(r'\[(.)\]', text)
+    if match:
+        # Return the character found inside the brackets
+        return match.group(1)
+    else:
+        # Return None if no brackets with a character inside are found
+        return None
 
 def main():
     script = []
 
     while True:
         # path to your image
+        take_screenshot(os.path.join(os.getcwd(), "./frames/frame.jpg"))
         image_path = os.path.join(os.getcwd(), "./frames/frame.jpg")
 
         # getting the base64 encoding
         base64_image = encode_image(image_path)
 
         # analyze posture
-        print("👀 David is watching...")
+        print("👀 Alexa is watching...")
         analysis = analyze_image(base64_image, script=script)
 
-        print("🎙️ David says:")
+        # We need to take the analysis and convert it into moves
+        print("🎙️ Alexa says:")
         print(analysis)
 
-        play_audio(analysis)
+        # We need to get the moves from the analysis
+        key = extract_move(analysis)
+
+        print("🎙️ Alexa moves:")
+        print(key)
+        press_key(key)
 
         script = script + [{"role": "assistant", "content": analysis}]
 
