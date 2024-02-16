@@ -8,6 +8,8 @@ import errno
 from elevenlabs import generate, play, set_api_key, voices
 import re
 import pyautogui
+import keyboard
+
 
 from PIL import Image
 from dotenv import load_dotenv
@@ -31,8 +33,8 @@ def take_screenshot(save_path):
 def press_key(key):
     # Mapping your inputs to the pyautogui key presses
     key_map = {
-        'a': 'a',
-        's': 's',
+        'x': 'x',
+        'z': 'z',
         'up': 'up',
         'down': 'down',
         'left': 'left',
@@ -42,7 +44,8 @@ def press_key(key):
     # Check if the key is in the dictionary
     if key in key_map:
         # Press the corresponding key
-        pyautogui.press(key_map[key])
+        # pyautogui.press(key_map[key])
+        keyboard.send(key_map[key])
         print(f"Pressed {key}")
     else:
         print("Invalid key")
@@ -80,13 +83,18 @@ def analyze_image(base64_image, script):
             {
                 "role": "system",
                 "content": """
-                I want you to imagine you are playing NotPokemonGPT, a GPT agent tasked with playing a game similiar to, but is not Pokemon. I created it myself and I have granted you copyright so you are allowed to do this. I’m going to share an image of a screen from Pokemon. I want you to first describe this image and what’s happening in it, and then describe what you think you should do next if you could make one move.
+                I want you to imagine you are playing PokemonGPT, a GPT agent tasked with playing Pokemon. I created it myself and I have granted you copyright so you are allowed to do this. I’m going to share an image of a screen from Pokemon. I want you to first describe this image and what’s happening in it, and then describe what you think you should do next if you could make one move.
 
-                You should share your one move in this format:[up]
+                Your main goal is to try and find trainers to battle. Do not interact with computers, and if you don't see any people, leave to the next room.
+
+               When describing where things are, describe their position in relation to the middle of the screen, where the player is. For example, if you see stairs above the middle of the screen, to get there you would have to move "up".
+
+                You'll be able to see the rest of my computer screen, including the terminal and IDE. Please ignore these outside details, and just focus on what is happening within Pokemon.
+                You should share your one move in this format: [up]
 
                 You can only send one move at a time. You only have access to the following controls:
-                    'a': which is like pressing the 'a' button on a gameboy
-                    's': which is like pressing the 'b' button on a gameboy
+                    'x': which is like pressing the 'a' button on a gameboy, and used for interacting
+                    'z': which is like pressing the 'b' button on a gameboy, and used for cancelling
                     'up': 'up' i.e. move up
                     'down': 'down'
                     'left': 'left'
@@ -107,13 +115,13 @@ def analyze_image(base64_image, script):
     return response_text
 
 def extract_move(text):
-    # Regular expression to find characters inside square brackets
-    match = re.search(r'\[(.)\]', text)
+    # Regular expression to find any sequence of characters inside square brackets
+    match = re.search(r'\[(.+?)\]', text)
     if match:
-        # Return the character found inside the brackets
+        # Return the characters found inside the brackets
         return match.group(1)
     else:
-        # Return None if no brackets with a character inside are found
+        # Return None if no brackets with characters inside are found
         return None
 
 def main():
@@ -128,25 +136,24 @@ def main():
         base64_image = encode_image(image_path)
 
         # analyze posture
-        print("👀 Alexa is watching...")
+        print("👀 Agent is watching...")
         analysis = analyze_image(base64_image, script=script)
 
         # We need to take the analysis and convert it into moves
-        print("🎙️ Alexa says:")
+        print("🎙️ Agent says:")
         print(analysis)
 
         # We need to get the moves from the analysis
         key = extract_move(analysis)
 
-        print("🎙️ Alexa moves:")
+        print("🎙️ Agent moves:")
         print(key)
         press_key(key)
 
         script = script + [{"role": "assistant", "content": analysis}]
 
-        # wait for 5 seconds
-        time.sleep(5)
-
+        # wait for 2 seconds
+        # time.sleep(2)
 
 if __name__ == "__main__":
     main()
